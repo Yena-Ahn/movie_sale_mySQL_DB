@@ -1,4 +1,4 @@
-
+from mysql.connector import connect
 
 # Problem 1 (5 pt.)
 def reset():
@@ -154,7 +154,39 @@ def recommend():
 
 # Total of 60 pt.
 def main():
+    #connect to mysql
+    connection = connect(
+        host='astronaut.snu.ac.kr',
+        port=7000,
+        user='DB2022_81863',
+        password='DB2022_81863',
+        db='DB2022_81863',
+        charset='utf8'
+
+    )
+    tables = {}
+
+    #create table Movie
+    tables['Movie'] = (
+        "CREATE TABLE 'Movie' ("
+        "    'movieID' int NOT NULL AUTO_INCREMENT"
+        "    'title' varchar(100) NOT NULL"
+        "    'price' int"
+        "    PRIMARY KEY ('title')"
+        "    FOREIGN KEY ('directorName') REFERENCES 'Director' ('Name')"
+    )
+
+    #create table Booking
+    tables['Booking'] = (
+        "CREATE TABLE 'Booking' ("
+        "    'bookingID' int NOT_NULL"
+    )
+
+
+
+
     # initialize database
+    
     reset()
 
     while True:
