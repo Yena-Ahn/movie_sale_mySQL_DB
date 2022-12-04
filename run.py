@@ -1,7 +1,34 @@
 import mysql.connector
+import pandas as pd
+from sqlalchemy import create_engine
+import pymysql
 
 
 # Problem 1 (5 pt.)
+def data(table_name):
+    data = pd.read_csv("data.csv")
+    engine = create_engine('mysql+pymysql://DB2022_81863:DB2022_81863@astronaut.snu.ac.kr:7000/DB2022_81863', encoding='utf-8')
+    if table_name == 'Director':
+        director = pd.DataFrame(data['director']).rename(columns={'director': 'name'})
+        director.drop_duplicates(inplace=True)
+        director.to_sql(name='Director', con=engine, if_exists='append', index=False)
+        return
+    if table_name == 'Movie':
+        movie = data[['title','price', 'director']]
+        movie.drop_duplicates(inplace=True)
+        movie.reset_index(inplace=True)
+        movie = movie.rename(columns={'index': 'movieID', 'director':'directorName'})
+        movie.to_sql(name='Movie', con=engine, if_exists='append', index=False)
+        return
+    if table_name == 'Audience':
+        audience = data[['name', 'gender', 'age']]
+        audience.drop_duplicates(inplace=True)
+        audience.reset_index(inplace=True)
+        audience = audience.rename(columns={'index': 'audienceID'})
+        audience.to_sql(name='Audience', con=engine, if_exists='append', index=False)
+        return
+
+
 def delete(cursor):
     # drop all tables in DB
     reset = ["SET @tables = NULL;",
@@ -52,9 +79,9 @@ def reset(status='Y'):
         "CREATE TABLE `Audience` ("
         "    `audienceID` int NOT NULL AUTO_INCREMENT,"
         "    `name` varchar(10) NOT NULL,"
-        "    `sex` char(1) NOT NULL,"
+        "    `gender` char(1) NOT NULL,"
         "    `age` int NOT NULL,"
-        "    CHECK ((`sex` = 'F') OR (`sex` = 'M')),"
+        "    CHECK ((`gender` = 'F') OR (`gender` = 'M')),"
         "    PRIMARY KEY (`audienceID`))"
     )
 
@@ -76,6 +103,7 @@ def reset(status='Y'):
         try:
             print(f"Creating table '{table}':", end=" ")
             cursor.execute(tables[table])
+            data(table)
         except mysql.connector.Error as e:
             if e.errno == mysql.connector.errorcode.ER_TABLE_EXISTS_ERROR:
                 print("already exists.")
