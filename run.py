@@ -1,12 +1,94 @@
-from mysql.connector import connect
+import mysql.connector
+
 
 # Problem 1 (5 pt.)
-def reset():
-    # YOUR CODE GOES HERE
+def delete(cursor):
+    # drop all tables in DB
+    reset = ["SET @tables = NULL;",
+             "SELECT GROUP_CONCAT(table_schema, '.', table_name) INTO @tables FROM information_schema.tables WHERE table_schema = 'DB2022_81863';",
+             "SET @tables = CONCAT('DROP TABLE ', @tables);", "PREPARE stmt FROM @tables;", "EXECUTE stmt;",
+             "DEALLOCATE PREPARE stmt;"]
+    for statement in reset:
+        cursor.execute(statement)
+
+def reset(status='Y'):
+    # connect to mysql
+    connection = mysql.connector.connect(
+        host='astronaut.snu.ac.kr',
+        port=7000,
+        user='DB2022_81863',
+        password='DB2022_81863',
+        db='DB2022_81863',
+        charset='utf8'
+    )
+    cursor = connection.cursor()
+
+    if status == 'Y':
+        delete(cursor)
+
+    tables = {}
+
+    # create table Director
+    tables['Director'] = (
+        "CREATE TABLE `Director` ("
+        "    `name` varchar(20) NOT NULL,"
+        "    PRIMARY KEY (`name`))"
+
+    )
+
+    # create table Movie
+    tables['Movie'] = (
+        "CREATE TABLE `Movie` ("
+        "    `movieID` int NOT NULL AUTO_INCREMENT,"
+        "    `title` varchar(100) NOT NULL,"
+        "    `price` int,"
+        "    `directorName` varchar(20) NOT NULL,"
+        "    PRIMARY KEY (`movieID`),"
+        "    FOREIGN KEY (`directorName`) REFERENCES `Director` (`name`))"
+    )
+
+    # create table Audience
+    tables['Audience'] = (
+        "CREATE TABLE `Audience` ("
+        "    `audienceID` int NOT NULL AUTO_INCREMENT,"
+        "    `name` varchar(10) NOT NULL,"
+        "    `sex` char(1) NOT NULL,"
+        "    `age` int NOT NULL,"
+        "    CHECK ((`sex` = 'F') OR (`sex` = 'M')),"
+        "    PRIMARY KEY (`audienceID`))"
+    )
+
+    # create table Booking
+    tables['Booking'] = (
+        "CREATE TABLE `Booking` ("
+        "    `bookingID` int NOT NULL AUTO_INCREMENT,"
+        "    `rating` int,"
+        "    `movieID` int NOT NULL,"
+        "    `audienceID` int NOT NULL,"
+        "    PRIMARY KEY (`bookingID`),"
+        "    FOREIGN KEY (`movieID`) REFERENCES `Movie` (`movieID`),"
+        "    FOREIGN KEY (`audienceID`) REFERENCES `Audience` (`audienceID`),"
+        "    CHECK ((`rating` <= 5) AND (`rating` >= 1)))"
+    )
+
+    print("Initializing databse...")
+    for table in tables:
+        try:
+            print(f"Creating table '{table}':", end=" ")
+            cursor.execute(tables[table])
+        except mysql.connector.Error as e:
+            if e.errno == mysql.connector.errorcode.ER_TABLE_EXISTS_ERROR:
+                print("already exists.")
+            else:
+                print(e.msg)
+        else:
+            print('successfully created.')
+
+    cursor.close()
+    connection.close()
 
     print('Initialized database')
-    # YOUR CODE GOES HERE
-    pass
+    print()
 
 # Problem 2 (3 pt.)
 def print_movies():
@@ -154,42 +236,13 @@ def recommend():
 
 # Total of 60 pt.
 def main():
-    #connect to mysql
-    connection = connect(
-        host='astronaut.snu.ac.kr',
-        port=7000,
-        user='DB2022_81863',
-        password='DB2022_81863',
-        db='DB2022_81863',
-        charset='utf8'
-
-    )
-    tables = {}
-
-    #create table Movie
-    tables['Movie'] = (
-        "CREATE TABLE 'Movie' ("
-        "    'movieID' int NOT NULL AUTO_INCREMENT"
-        "    'title' varchar(100) NOT NULL"
-        "    'price' int"
-        "    PRIMARY KEY ('title')"
-        "    FOREIGN KEY ('directorName') REFERENCES 'Director' ('Name')"
-    )
-
-    #create table Booking
-    tables['Booking'] = (
-        "CREATE TABLE 'Booking' ("
-        "    'bookingID' int NOT_NULL"
-    )
-
-
 
 
     # initialize database
-    
     reset()
 
     while True:
+        print("WELCOME TO MOVIE BOOKING SYSTEM")
         print('============================================================')
         print('1. print all movies')
         print('2. print all audiences')
@@ -233,7 +286,11 @@ def main():
             print('Bye!')
             break
         elif menu == 13:
-            reset()
+            inputVal = input("Are you sure to reset the database? [Y/N] ")
+            while inputVal != 'Y' and inputVal != 'N':
+                print("Please choose between 'Y' or 'N'.")
+                inputVal = input("Are you sure to reset the database? [Y/N] ")
+            reset(inputVal)
         else:
             print('Invalid action')
 
