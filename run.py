@@ -125,12 +125,16 @@ def print_movies(cursor):
 
 
 # Problem 3 (3 pt.)
-def print_audiences():
-    # YOUR CODE GOES HERE
-
-    
-    # YOUR CODE GOES HERE
-    pass
+def print_audiences(cursor):
+    cursor.execute("SELECT *"
+                   "FROM Audience"
+                   )
+    print("-" * (2 + 5 + 5 + 55 + 8 + 20 + 5 + 4 + 8 + 3 + 7 + 5))
+    print("id" + " " * 5 + "name" + " " * 55 + "gender" + " " * 5 + "age" + " " * 5)
+    print("-" * (2 + 5 + 5 + 55 + 8 + 20 + 5 + 4 + 8 + 3 + 7 + 5))
+    for (id, name, gender, age) in cursor:
+        print(str(id) + " " * (7-len(str(id))) + name + " " * (60-len(name)) + gender + " " * 10 + str(age) + " " * (8-len(str(age))))
+    print("-" * (2 + 5 + 5 + 55 + 8 + 20 + 5 + 4 + 8 + 3 + 7 + 5))
 
 # Problem 4 (3 pt.)
 def insert_movie():
@@ -298,7 +302,7 @@ def main():
         if menu == 1:
             print_movies(cursor)
         elif menu == 2:
-            print_audiences()
+            print_audiences(cursor)
         elif menu == 3:
             insert_movie()
         elif menu == 4:
