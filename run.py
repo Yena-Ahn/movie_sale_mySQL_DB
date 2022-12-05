@@ -37,17 +37,8 @@ def delete(cursor):
     for statement in reset:
         cursor.execute(statement)
 
-def reset(status='Y'):
-    # connect to mysql
-    connection = mysql.connector.connect(
-        host='astronaut.snu.ac.kr',
-        port=7000,
-        user='DB2022_81863',
-        password='DB2022_81863',
-        db='DB2022_81863',
-        charset='utf8'
-    )
-    cursor = connection.cursor()
+def reset(connection, cursor, status='Y'):
+
 
     if status == 'Y':
         delete(cursor)
@@ -111,19 +102,27 @@ def reset(status='Y'):
         else:
             print('successfully created.')
 
-    cursor.close()
-    connection.close()
+
 
     print('Initialized database')
     print()
 
 # Problem 2 (3 pt.)
-def print_movies():
-    # YOUR CODE GOES HERE
+def print_movies(cursor):
+    cursor.execute("SELECT m.*, count(b.bookingID), avg(b.rating)"
+                   "FROM Movie AS m, Booking AS b"
+                   "WHERE m.movieID = b.movieID"
+                   "GROUP BY m.movieID, m.title, m.directorName, m.price")
+    print("-" * (2+10+5+100+8+20+5+4+8+3+7+5))
+    print("id" + " " * 10 + "title" + " " * 100 + "director" + " " * 20 + "price" + " " * 4 + "bookings" + " " * 3 + "ratings" + " " * 5)
+    print("-" * (2+10+5+100+8+20+5+4+8+3+7+5))
 
-    
-    # YOUR CODE GOES HERE
-    pass
+    for (movieID, title, director, price, booking, rating) in cursor:
+        print(str(movieID) + " " * (12-len(str(movieID))) + title + " " * (105-len(title)) + director + " " * (28-len(director)) + str(price) + " " * (9-len(str(price))) + str(booking) + " " * (11-len(str(booking))) + str(rating) + " " * (12-len(str(rating))))
+    print("-" * (2 + 10 + 5 + 100 + 8 + 20 + 5 + 4 + 8 + 3 + 7 + 5))
+
+
+
 
 # Problem 3 (3 pt.)
 def print_audiences():
@@ -263,10 +262,19 @@ def recommend():
 
 # Total of 60 pt.
 def main():
-
+    # connect to mysql
+    connection = mysql.connector.connect(
+        host='astronaut.snu.ac.kr',
+        port=7000,
+        user='DB2022_81863',
+        password='DB2022_81863',
+        db='DB2022_81863',
+        charset='utf8'
+    )
+    cursor = connection.cursor()
 
     # initialize database
-    reset()
+    reset(connection, cursor, "Y")
 
     while True:
         print("WELCOME TO MOVIE BOOKING SYSTEM")
@@ -288,7 +296,7 @@ def main():
         menu = int(input('Select your action: '))
 
         if menu == 1:
-            print_movies()
+            print_movies(cursor)
         elif menu == 2:
             print_audiences()
         elif menu == 3:
@@ -311,13 +319,15 @@ def main():
             recommend()
         elif menu == 12:
             print('Bye!')
+            cursor.close()
+            connection.close()
             break
         elif menu == 13:
             inputVal = input("Are you sure to reset the database? [Y/N] ")
             while inputVal != 'Y' and inputVal != 'N':
                 print("Please choose between 'Y' or 'N'.")
                 inputVal = input("Are you sure to reset the database? [Y/N] ")
-            reset(inputVal)
+            reset(connection, cursor, inputVal)
         else:
             print('Invalid action')
 
