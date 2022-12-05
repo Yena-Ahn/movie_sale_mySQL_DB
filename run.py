@@ -57,7 +57,7 @@ def reset(connection, cursor, status='Y'):
     tables['Movie'] = (
         "CREATE TABLE `Movie` ("
         "    `movieID` int NOT NULL AUTO_INCREMENT,"
-        "    `title` varchar(100) NOT NULL,"
+        "    `title` varchar(55) NOT NULL,"
         "    `price` int,"
         "    `directorName` varchar(20) NOT NULL,"
         "    PRIMARY KEY (`movieID`),"
@@ -109,18 +109,17 @@ def reset(connection, cursor, status='Y'):
 
 # Problem 2 (3 pt.)
 def print_movies(cursor):
-    cursor.execute("SELECT m.*, count(b.bookingID), avg(b.rating)"
-                   "FROM Movie m, Booking b "
-                   "WHERE m.movieID = b.movieID "
+    cursor.execute("SELECT m.movieID, m.title, m.directorName, m.price, count(b.bookingID), avg(b.rating)"
+                   "FROM Movie m LEFT OUTER JOIN Booking b USING (movieID) "
                    "GROUP BY m.movieID, m.title, m.directorName, m.price"
                    )
-    print("-" * (2+10+5+100+8+20+5+4+8+3+7+5))
-    print("id" + " " * 10 + "title" + " " * 100 + "director" + " " * 20 + "price" + " " * 4 + "bookings" + " " * 3 + "ratings" + " " * 5)
-    print("-" * (2+10+5+100+8+20+5+4+8+3+7+5))
+    print("-" * (2+5+5+55+8+20+5+4+8+3+7+5))
+    print("id" + " " * 5 + "title" + " " * 55 + "director" + " " * 20 + "price" + " " * 4 + "bookings" + " " * 3 + "ratings" + " " * 5)
+    print("-" * (2+5+5+55+8+20+5+4+8+3+7+5))
 
     for (movieID, title, director, price, booking, rating) in cursor:
-        print(str(movieID) + " " * (12-len(str(movieID))) + title + " " * (105-len(title)) + director + " " * (28-len(director)) + str(price) + " " * (9-len(str(price))) + str(booking) + " " * (11-len(str(booking))) + str(rating) + " " * (12-len(str(rating))))
-    print("-" * (2 + 10 + 5 + 100 + 8 + 20 + 5 + 4 + 8 + 3 + 7 + 5))
+        print(str(movieID) + " " * (7-len(str(movieID))) + str(title) + " " * (60-len(str(title))) + str(director) + " " * (28-len(str(director))) + str(price) + " " * (9-len(str(price))) + str(booking) + " " * (11-len(str(booking))) + str(rating) + " " * (12-len(str(rating))))
+    print("-" * (2+5+5+55+8+20+5+4+8+3+7+5))
 
 
 
