@@ -14,17 +14,16 @@ def data(table_name):
         director.to_sql(name='Director', con=engine, if_exists='append', index=False)
         return
     if table_name == 'Movie':
-        movie = data[['title','price', 'director']]
-        movie.drop_duplicates(inplace=True)
-        movie.reset_index(inplace=True)
-        movie = movie.rename(columns={'index': 'movieID', 'director':'directorName'})
+        movie = data[['title', 'price', 'director']]
+        movie = movie.drop_duplicates(ignore_index=True)
+        movie = movie.rename(columns={'director':'directorName'})
         movie.to_sql(name='Movie', con=engine, if_exists='append', index=False)
         return
     if table_name == 'Audience':
         audience = data[['name', 'gender', 'age']]
-        audience.drop_duplicates(inplace=True)
-        audience.reset_index(inplace=True)
-        audience = audience.rename(columns={'index': 'audienceID'})
+        audience = audience.drop_duplicates()
+        audience.loc[audience['gender'] == "male", 'gender'] = 'M'
+        audience.loc[audience['gender'] == "female", 'gender'] = 'F'
         audience.to_sql(name='Audience', con=engine, if_exists='append', index=False)
         return
 
