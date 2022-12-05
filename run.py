@@ -110,9 +110,10 @@ def reset(connection, cursor, status='Y'):
 # Problem 2 (3 pt.)
 def print_movies(cursor):
     cursor.execute("SELECT m.*, count(b.bookingID), avg(b.rating)"
-                   "FROM Movie AS m, Booking AS b"
-                   "WHERE m.movieID = b.movieID"
-                   "GROUP BY m.movieID, m.title, m.directorName, m.price")
+                   "FROM Movie m, Booking b "
+                   "WHERE m.movieID = b.movieID "
+                   "GROUP BY m.movieID, m.title, m.directorName, m.price"
+                   )
     print("-" * (2+10+5+100+8+20+5+4+8+3+7+5))
     print("id" + " " * 10 + "title" + " " * 100 + "director" + " " * 20 + "price" + " " * 4 + "bookings" + " " * 3 + "ratings" + " " * 5)
     print("-" * (2+10+5+100+8+20+5+4+8+3+7+5))
