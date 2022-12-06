@@ -137,17 +137,35 @@ def print_audiences(cursor):
     print("-" * (2 + 5 + 5 + 55 + 8 + 20 + 5 + 4 + 8 + 3 + 7 + 5))
 
 # Problem 4 (3 pt.)
-def insert_movie():
+def insert_movie(cursor):
     # YOUR CODE GOES HERE
     title = input('Movie title: ')
     director = input('Movie director: ')
     price = input('Movie price: ')
-    
 
-    # success message
-    print('A movie is successfully inserted')
-    # YOUR CODE GOES HERE
-    pass
+    while not price.isdigit() or director.isdigit():
+        if not price.isdigit():
+            print("Please input correct integer value to price.")
+            title = input('Movie title: ')
+            director = input('Movie director: ')
+            price = input('Movie price: ')
+        else:
+            print("Please input correct characters to director.")
+            title = input('Movie title: ')
+            director = input('Movie director: ')
+            price = input('Movie price: ')
+
+    try:
+        cursor.execute(f"INSERT INTO Director VALUES ('{director}')")
+        cursor.execute(f"INSERT INTO Movie VALUES (NULL, '{title}', {price}, '{director}')")
+        print('A movie is successfully inserted.')
+        print()
+        return
+    except:
+        print("Please input correctly.")
+        insert_movie(cursor)
+
+
 
 # Problem 6 (4 pt.)
 def remove_movie():
@@ -164,17 +182,44 @@ def remove_movie():
     pass
 
 # Problem 5 (3 pt.)
-def insert_audience():
+def insert_audience(cursor):
     # YOUR CODE GOES HERE
     name = input('Audience name: ')
     gender = input('Audience gender: ')
     age = input('Audience age: ')
-    
 
-    # success message
-    print('An audience is successfully inserted')
-    # YOUR CODE GOES HERE
-    pass
+    while name.isdigit():
+        print("Please input correct characters to name.")
+        name = input('Audience name: ')
+        gender = input('Audience gender: ')
+        age = input('Audience age: ')
+
+    try:
+        cursor.execute(f"SELECT EXISTS (SELECT * FROM Audience WHERE name = '{name}' AND gender = '{gender}' AND age = {age})")
+    except mysql.connector.errors.ProgrammingError as e:
+            print("Please input correct integer value to age.")
+            insert_audience(cursor)
+
+
+    for (bool,) in cursor:
+        if bool == 0: # only insert when audience is unique
+            try:
+                cursor.execute(f"INSERT INTO Audience VALUES(NULL, '{name}', '{gender}', {age})")
+                print('An audience is successfully inserted')
+                print()
+                return
+            except mysql.connector.errors.DatabaseError as e:
+                print(f"Please input correct gender [F/M].")
+                insert_audience(cursor)
+            except mysql.connector.errors.ProgrammingError as e:
+                print("Please input correctly.")
+                insert_audience(cursor)
+
+        else:
+            print("The audience already exists!")
+            return
+
+
 
 # Problem 7 (4 pt.)
 def remove_audience():
@@ -304,23 +349,23 @@ def main():
         elif menu == 2:
             print_audiences(cursor)
         elif menu == 3:
-            insert_movie()
+            insert_movie(cursor)
         elif menu == 4:
-            remove_movie()
+            remove_movie(cursor)
         elif menu == 5:
-            insert_audience()
+            insert_audience(cursor)
         elif menu == 6:
-            remove_audience()
+            remove_audience(cursor)
         elif menu == 7:
-            book_movie()
+            book_movie(cursor)
         elif menu == 8:
-            rate_movie()
+            rate_movie(cursor)
         elif menu == 9:
-            print_audiences_for_movie()
+            print_audiences_for_movie(cursor)
         elif menu == 10:
-            print_movies_for_audience()
+            print_movies_for_audience(cursor)
         elif menu == 11:
-            recommend()
+            recommend(cursor)
         elif menu == 12:
             print('Bye!')
             cursor.close()
