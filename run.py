@@ -171,22 +171,22 @@ def insert_movie(cursor):
 def remove_movie(cursor):
     # YOUR CODE GOES HERE
     movie_id = input('Movie ID: ')
-    if not movie_id.isdigit():
+    while not movie_id.isdigit():
+        print("Please insert correct integer value.")
         movie_id = input('Movie ID: ')
 
     cursor.execute(f"SELECT EXISTS (SELECT * FROM Movie WHERE movieID = {movie_id})")
     for (bool,) in cursor:
         if bool == 0:
-            print(f'Movie {movie_id} does not exist')
-            print()
-            return
+            print(f'Movie {movie_id} does not exist. Please insert correct Movie ID.')
+            remove_movie(cursor)
+
         if bool == 1:
             cursor.execute(f"DELETE FROM Booking WHERE movieID = {movie_id}")
             cursor.execute(f"DELETE FROM Movie WHERE movieID = {movie_id}")
+            print('A movie is successfully removed')
+            return
 
-
-    # success message
-    print('A movie is successfully removed')
 
 
 # Problem 5 (3 pt.)
@@ -230,18 +230,25 @@ def insert_audience(cursor):
 
 
 # Problem 7 (4 pt.)
-def remove_audience():
+def remove_audience(cursor):
     # YOUR CODE GOES HERE
     audience_id = input('Audience ID: ')
+    while not audience_id.isdigit():
+        print("Please insert correct integer value.")
+        audience_id = input('Audience ID: ')
 
+    cursor.execute(f"SELECT EXISTS (SELECT * FROM Audience WHERE audienceID = {audience_id})")
 
-    # error message
-    print(f'Audience {audience_id} does not exist')
+    for (bool,) in cursor:
+        if bool == 0:
+            print(f'Audience {audience_id} does not exist. Please insert correct Audience ID.')
+            remove_audience(cursor)
+        if bool == 1:
+            cursor.execute(f"DELETE FROM Booking WHERE audienceID = {audience_id}")
+            cursor.execute(f"DELETE FROM Audience WHERE audienceID = {audience_id}")
+            print('An audience is successfully removed')
+            return;
 
-    # success message
-    print('An audience is successfully removed')
-    # YOUR CODE GOES HERE
-    pass
 
 # Problem 8 (5 pt.)
 def book_movie():
