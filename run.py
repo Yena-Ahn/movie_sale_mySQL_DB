@@ -247,25 +247,47 @@ def remove_audience(cursor):
             cursor.execute(f"DELETE FROM Booking WHERE audienceID = {audience_id}")
             cursor.execute(f"DELETE FROM Audience WHERE audienceID = {audience_id}")
             print('An audience is successfully removed')
-            return;
+            return
 
 
 # Problem 8 (5 pt.)
-def book_movie():
+def book_movie(cursor):
     # YOUR CODE GOES HERE
     movie_id = input('Movie ID: ')
     audience_id = input('Audience ID: ')
 
+    while not (movie_id.isdigit() and audience_id.isdigit()):
+        print("Please insert correct integer value.")
+        movie_id = input('Movie ID: ')
+        audience_id = input('Audience ID: ')
 
-    # error message
-    print(f'Movie {movie_id} does not exist')
-    print(f'Audience {audience_id} does not exist')
-    print('One audience cannot book the same movie twice')
+    cursor.execute(f"SELECT EXISTS (SELECT * FROM Movie WHERE movieID = {movie_id})")
+    for (bool,) in cursor:
+        if bool == 0:
+            print(f'Movie {movie_id} does not exist. Please insert correct Movie ID.')
+            book_movie(cursor)
+        else:
+            cursor.execute(f"SELECT EXISTS (SELECT * FROM Audience WHERE audienceID = {audience_id})")
+            for (bool,) in cursor:
+                if bool == 0:
+                    print(f'Audience {audience_id} does not exist. Please insert correct Audience ID.')
+                    book_movie(cursor)
+                else:
+                    cursor.execute(f"SELECT EXISTS (SELECT * FROM Booking WHERE movieID = {movie_id} and audienceID = {audience_id})")
+                    for (bool,) in cursor:
+                        if bool == 1:
+                            print('One audience cannot book the same movie twice.')
+                            return
+                        else:
+                            cursor.execute(f"INSERT INTO Booking VALUES (NULL, NULL, {movie_id}, {audience_id})")
+                            print('Successfully booked a movie')
+                            return
 
-    # success message
-    print('Successfully booked a movie')
-    # YOUR CODE GOES HERE
-    pass
+
+
+
+
+
 
 # Problem 9 (5 pt.)
 def rate_movie():
