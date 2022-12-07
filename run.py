@@ -79,12 +79,21 @@ def reset(connection, cursor, status='Y'):
     tables['Booking'] = (
         "CREATE TABLE `Booking` ("
         "    `bookingID` int NOT NULL AUTO_INCREMENT,"
-        "    `rating` int,"
         "    `movieID` int NOT NULL,"
         "    `audienceID` int NOT NULL,"
         "    PRIMARY KEY (`bookingID`),"
         "    FOREIGN KEY (`movieID`) REFERENCES `Movie` (`movieID`),"
-        "    FOREIGN KEY (`audienceID`) REFERENCES `Audience` (`audienceID`),"
+        "    FOREIGN KEY (`audienceID`) REFERENCES `Audience` (`audienceID`))"
+
+    )
+
+    # create table Rating
+    tables['Rating'] = (
+        "CREATE TABLE `Rating` ("
+        "    `bookingID` int NOT NULL,"
+        "    `rating` int,"
+        "    PRIMARY KEY (`bookingID`),"
+        "    FOREIGN KEY (`bookingID`) REFERENCES `Booking` (`bookingID`),"
         "    CHECK ((`rating` <= 5) AND (`rating` >= 1)))"
     )
 
@@ -279,33 +288,67 @@ def book_movie(cursor):
                             print('One audience cannot book the same movie twice.')
                             return
                         else:
-                            cursor.execute(f"INSERT INTO Booking VALUES (NULL, NULL, {movie_id}, {audience_id})")
+                            cursor.execute(f"INSERT INTO Booking VALUES (NULL, {movie_id}, {audience_id})")
                             print('Successfully booked a movie')
                             return
 
 
-
-
-
-
-
 # Problem 9 (5 pt.)
-def rate_movie():
-    # YOUR CODE GOES HERE
+def rate_movie(cursor):
+    print("******************************************************************")
+    print("If the followings are not considered, the action will be aborted:")
+    print("    * Movie ID, Audience ID, and Ratings should be integer.")
+    print("    * Ratings should be an integer value between 1 to 5.")
+    print("    * Movie ID and Audience ID should exist in the database.")
+    print("******************************************************************")
+
     movie_id = input('Movie ID: ')
     audience_id = input('Audience ID: ')
     rating = input('Ratings (1~5): ')
 
+    while not (movie_id.isdigit() and audience_id.isdigit() and rating.isdigit()):
+        print("Please re-enter correct integer values.")
+        movie_id = input('Movie ID: ')
+        audience_id = input('Audience ID: ')
+        rating = input('Ratings (1~5): ')
 
-    # error message
-    print(f'Movie {movie_id} does not exist')
-    print(f'Audience {audience_id} does not exist')
-    print(f'Wrong value for a rating')
 
-    # success message
-    print('Successfully rated a movie')
-    # YOUR CODE GOES HERE
-    pass
+    cursor.execute(f"SELECT EXISTS (SELECT * FROM Movie WHERE movieID = {movie_id})")
+    for (bool,) in cursor:
+        if bool == 0:
+            print(f'Movie {movie_id} does not exist.')
+            return
+
+
+    cursor.execute(f"SELECT EXISTS (SELECT * FROM Audience WHERE audienceID = {audience_id})")
+    for (bool,) in cursor:
+        if bool == 0:
+            print(f'Audience {audience_id} does not exist')
+            return
+
+    if int(rating) > 5 or int(rating) < 1:
+        print('Wrong value for a rating: should be a value between 1 to 5.')
+        return
+
+    cursor.execute(f"SELECT EXISTS (SELECT * FROM Booking WHERE movieID = {movie_id} and audienceID = {audience_id})")
+    for (bool,) in cursor:
+        if bool == 0:
+            print("Booking does not exist. You can't rate the movie you haven't booked.")
+            return
+
+    cursor.execute(f"SELECT EXISTS (SELECT * FROM Rating WHERE bookingID = (SELECT bookingID FROM Booking WHERE movieID = {movie_id} and audienceID = {audience_id}))")
+    for (bool,) in cursor:
+        if bool == 0:
+            cursor.execute(f"SELECT bookingID FROM Booking WHERE movieID = {movie_id} and audienceID = {audience_id}")
+            for (bool,) in cursor:
+                cursor.execute(f"INSERT INTO Rating VALUES ({bool}, {rating})")
+                print('Successfully rated a movie.')
+                return
+        else:
+            cursor.execute(f"UPDATE Rating SET rating = {rating} WHERE bookingID = (SELECT bookingID FROM Booking WHERE movieID = {movie_id} and audienceID = {audience_id})")
+            print('Successfully rated a movie.')
+            return
+
 
 # Problem 10 (5 pt.)
 def print_audiences_for_movie():
