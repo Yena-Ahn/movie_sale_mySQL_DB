@@ -168,18 +168,26 @@ def insert_movie(cursor):
 
 
 # Problem 6 (4 pt.)
-def remove_movie():
+def remove_movie(cursor):
     # YOUR CODE GOES HERE
     movie_id = input('Movie ID: ')
+    if not movie_id.isdigit():
+        movie_id = input('Movie ID: ')
 
+    cursor.execute(f"SELECT EXISTS (SELECT * FROM Movie WHERE movieID = {movie_id})")
+    for (bool,) in cursor:
+        if bool == 0:
+            print(f'Movie {movie_id} does not exist')
+            print()
+            return
+        if bool == 1:
+            cursor.execute(f"DELETE FROM Booking WHERE movieID = {movie_id}")
+            cursor.execute(f"DELETE FROM Movie WHERE movieID = {movie_id}")
 
-    # error message
-    print(f'Movie {movie_id} does not exist')
 
     # success message
     print('A movie is successfully removed')
-    # YOUR CODE GOES HERE
-    pass
+
 
 # Problem 5 (3 pt.)
 def insert_audience(cursor):
