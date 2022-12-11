@@ -81,21 +81,23 @@ def reset(connection, cursor, status='Y'):
         "    `bookingID` int NOT NULL AUTO_INCREMENT,"
         "    `movieID` int NOT NULL,"
         "    `audienceID` int NOT NULL,"
-        "    PRIMARY KEY (`bookingID`),"
-        "    FOREIGN KEY (`movieID`) REFERENCES `Movie` (`movieID`),"
-        "    FOREIGN KEY (`audienceID`) REFERENCES `Audience` (`audienceID`))"
-
-    )
-
-    # create table Rating
-    tables['Rating'] = (
-        "CREATE TABLE `Rating` ("
-        "    `bookingID` int NOT NULL,"
         "    `rating` int,"
         "    PRIMARY KEY (`bookingID`),"
-        "    FOREIGN KEY (`bookingID`) REFERENCES `Booking` (`bookingID`),"
+        "    FOREIGN KEY (`movieID`) REFERENCES `Movie` (`movieID`),"
+        "    FOREIGN KEY (`audienceID`) REFERENCES `Audience` (`audienceID`),"
         "    CHECK ((`rating` <= 5) AND (`rating` >= 1)))"
+
     )
+
+    # # create table Rating
+    # tables['Rating'] = (
+    #     "CREATE TABLE `Rating` ("
+    #     "    `bookingID` int NOT NULL,"
+    #     "    `rating` int,"
+    #     "    PRIMARY KEY (`bookingID`),"
+    #     "    FOREIGN KEY (`bookingID`) REFERENCES `Booking` (`bookingID`),"
+    #     "    CHECK ((`rating` <= 5) AND (`rating` >= 1)))"
+    # )
 
     print("Initializing databse...")
     for table in tables:
@@ -288,7 +290,7 @@ def book_movie(cursor):
                             print('One audience cannot book the same movie twice.')
                             return
                         else:
-                            cursor.execute(f"INSERT INTO Booking VALUES (NULL, {movie_id}, {audience_id})")
+                            cursor.execute(f"INSERT INTO Booking VALUES (NULL, {movie_id}, {audience_id}, NULL)")
                             print('Successfully booked a movie')
                             return
 
@@ -335,31 +337,63 @@ def rate_movie(cursor):
         if bool == 0:
             print("Booking does not exist. You can't rate the movie you haven't booked.")
             return
-
-    cursor.execute(f"SELECT EXISTS (SELECT * FROM Rating WHERE bookingID = (SELECT bookingID FROM Booking WHERE movieID = {movie_id} and audienceID = {audience_id}))")
-    for (bool,) in cursor:
-        if bool == 0:
-            cursor.execute(f"SELECT bookingID FROM Booking WHERE movieID = {movie_id} and audienceID = {audience_id}")
-            for (bool,) in cursor:
-                cursor.execute(f"INSERT INTO Rating VALUES ({bool}, {rating})")
-                print('Successfully rated a movie.')
-                return
         else:
-            cursor.execute(f"UPDATE Rating SET rating = {rating} WHERE bookingID = (SELECT bookingID FROM Booking WHERE movieID = {movie_id} and audienceID = {audience_id})")
+            cursor.execute(
+                f"UPDATE Booking SET rating = {rating} WHERE movieID = {movie_id} and audienceID = {audience_id}")
             print('Successfully rated a movie.')
-            return
+
+
+    # cursor.execute(f"SELECT EXISTS (SELECT * FROM Rating WHERE bookingID = (SELECT bookingID FROM Booking WHERE movieID = {movie_id} and audienceID = {audience_id}))")
+    # for (bool,) in cursor:
+    #     if bool == 0:
+    #         cursor.execute(f"SELECT bookingID FROM Booking WHERE movieID = {movie_id} and audienceID = {audience_id}")
+    #         for (bool,) in cursor:
+    #             cursor.execute(f"INSERT INTO Rating VALUES ({bool}, {rating})")
+    #             print('Successfully rated a movie.')
+    #             return
+    #     else:
+    #         cursor.execute(f"UPDATE Rating SET rating = {rating} WHERE bookingID = (SELECT bookingID FROM Booking WHERE movieID = {movie_id} and audienceID = {audience_id})")
+    #         print('Successfully rated a movie.')
+    #         return
 
 
 # Problem 10 (5 pt.)
-def print_audiences_for_movie():
+def print_audiences_for_movie(cursor):
     # YOUR CODE GOES HERE
-    audience_id = input('Audience ID: ')
+    movie_id = input('Movie ID: ')
+    while not movie_id.isdigit():
+        movie_id = input('Movie ID: ')
 
-    
-    # error message
-    print(f'Audience {audience_id} does not exist')
-    # YOUR CODE GOES HERE
-    pass
+
+    cursor.execute(f"SELECT EXISTS (SELECT * FROM Movie WHERE movieID = {movie_id})")
+    for (bool,) in cursor:
+        if bool == 0:
+            print(f'Movie {movie_id} does not exist')
+            print_audiences_for_movie(cursor)
+        else:
+            cursor.execute("SELECT a.audienceID, name, gender, age, rating FROM Audience a LEFT OUTER JOIN Booking b USING (audienceID)"
+                           f"WHERE b.movieID = {movie_id}"
+                           )
+            print("-" * (2 + 5 + 5 + 55 + 8 + 20 + 5 + 4 + 8 + 3 + 7 + 5))
+            print(
+                "id" + " " * 5 + "name" + " " * 60 + "gender" + " " * 30 + "age" + " " * 6 + "rating" + " " * 6)
+            print("-" * (2 + 5 + 5 + 55 + 8 + 20 + 5 + 4 + 8 + 3 + 7 + 5))
+            for (audienceID, name, gender, age, rating) in cursor:
+                print(
+                    str(audienceID) + " " * (7 - len(str(audienceID))) + str(name) + " " * (64 - len(str(name))) + str(
+                        gender)
+                    + " " * (36 - len(str(gender))) + str(age) + " " * (9 - len(str(age))) + str(rating) + " " * (
+                                12 - len(str(rating))))
+            print("-" * (2 + 5 + 5 + 55 + 8 + 20 + 5 + 4 + 8 + 3 + 7 + 5))
+            return
+
+
+
+
+
+
+
+
 
 
 # Problem 11 (5 pt.)
