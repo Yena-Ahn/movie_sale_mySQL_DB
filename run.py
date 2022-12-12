@@ -3,7 +3,6 @@ import math
 import mysql.connector
 import pandas as pd
 from sqlalchemy import create_engine
-import pymysql
 
 
 # Problem 1 (5 pt.)
@@ -45,7 +44,7 @@ def create_table(cursor):
     tables['Movie'] = (
         "CREATE TABLE `Movie` ("
         "    `movieID` int NOT NULL AUTO_INCREMENT,"
-        "    `title` varchar(100) NOT NULL,"
+        "    `title` varchar(70) NOT NULL,"
         "    `price` int,"
         "    `directorName` varchar(50) NOT NULL,"
         "    PRIMARY KEY (`movieID`),"
@@ -93,10 +92,8 @@ def create_table(cursor):
 
 def delete(cursor):
     # drop all tables in DB
-    reset = ["SET @tables = NULL;",
-             "SELECT GROUP_CONCAT(table_schema, '.', table_name) INTO @tables FROM information_schema.tables WHERE table_schema = 'DB2022_81863';",
-             "SET @tables = CONCAT('DROP TABLE ', @tables);", "PREPARE stmt FROM @tables;", "EXECUTE stmt;",
-             "DEALLOCATE PREPARE stmt;"]
+    reset = ["DROP TABLE if exists Booking","DROP TABLE if exists Audience","DROP TABLE if exists Movie","DROP TABLE if exists Director"]
+
     for statement in reset:
         cursor.execute(statement)
 
@@ -113,7 +110,7 @@ def reset(cursor, status="Y"):
                 print(f"Creating table '{table}':", end=" ")
                 data(table)
             except mysql.connector.Error as e:
-                    print(e.msg)
+                    print("[ERROR] " + e.msg)
             else:
                 print('successfully created.')
         print('Initialized database')
@@ -128,13 +125,13 @@ def print_movies(cursor):
                    "FROM Movie m LEFT OUTER JOIN Booking b USING (movieID) "
                    "GROUP BY m.movieID, m.title, m.directorName, m.price"
                    )
-    print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
-    print("id" + " " * 5 + "title" + " " * 100 + "director" + " " * 50 + "price" + " " * 4 + "bookings" + " " * 3 + "ratings" + " " * 5)
-    print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
+    print("-" * (2+5+5+70+8+50+5+4+8+3+7+5))
+    print("id" + " " * 5 + "title" + " " * 70 + "director" + " " * 50 + "price" + " " * 4 + "bookings" + " " * 3 + "ratings" + " " * 5)
+    print("-" * (2+5+5+70+8+50+5+4+8+3+7+5))
 
     for (movieID, title, director, price, booking, rating) in cursor:
-        print(str(movieID) + " " * (7-len(str(movieID))) + str(title) + " " * (105-len(str(title))) + str(director) + " " * (58-len(str(director))) + str(price) + " " * (9-len(str(price))) + str(booking) + " " * (11-len(str(booking))) + str(rating) + " " * (12-len(str(rating))))
-    print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
+        print(str(movieID) + " " * (7-len(str(movieID))) + str(title) + " " * (75-len(str(title))) + str(director) + " " * (58-len(str(director))) + str(price) + " " * (9-len(str(price))) + str(booking) + " " * (11-len(str(booking))) + str(rating) + " " * (12-len(str(rating))))
+    print("-" * (2 + 5 + 5 + 70 + 8 + 50 + 5 + 4 + 8 + 3 + 7 + 5))
 
 
 
@@ -144,12 +141,12 @@ def print_audiences(cursor):
     cursor.execute("SELECT *"
                    "FROM Audience"
                    )
-    print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
-    print("id" + " " * 5 + "name" + " " * 100 + "gender" + " " * 5 + "age" + " " * 5)
-    print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
+    print("-" * (2+5+5+70+8+50+5+4+8+3+7+5))
+    print("id" + " " * 5 + "name" + " " * 70 + "gender" + " " * 5 + "age" + " " * 5)
+    print("-" * (2+5+5+70+8+50+5+4+8+3+7+5))
     for (id, name, gender, age) in cursor:
-        print(str(id) + " " * (7-len(str(id))) + name + " " * (104-len(name)) + gender + " " * 10 + str(age) + " " * (8-len(str(age))))
-    print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
+        print(str(id) + " " * (7-len(str(id))) + name + " " * (74-len(name)) + gender + " " * 10 + str(age) + " " * (8-len(str(age))))
+    print("-" * (2+5+5+70+8+50+5+4+8+3+7+5))
 
 # Problem 4 (3 pt.)
 def insert_movie(cursor):
@@ -366,17 +363,17 @@ def print_audiences_for_movie(cursor):
             cursor.execute("SELECT a.audienceID, name, gender, age, rating FROM Audience a LEFT OUTER JOIN Booking b USING (audienceID)"
                            f"WHERE b.movieID = {movie_id}"
                            )
-            print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
+            print("-" * (2+5+5+70+8+50+5+4+8+3+7+5))
             print(
-                "id" + " " * 5 + "name" + " " * 100 + "gender" + " " * 60 + "age" + " " * 9 + "rating" + " " * 9)
-            print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
+                "id" + " " * 5 + "name" + " " * 70 + "gender" + " " * 60 + "age" + " " * 9 + "rating" + " " * 9)
+            print("-" * (2+5+5+70+8+50+5+4+8+3+7+5))
             for (audienceID, name, gender, age, rating) in cursor:
                 print(
-                    str(audienceID) + " " * (7 - len(str(audienceID))) + str(name) + " " * (104 - len(str(name))) + str(
+                    str(audienceID) + " " * (7 - len(str(audienceID))) + str(name) + " " * (74 - len(str(name))) + str(
                         gender)
                     + " " * (66 - len(str(gender))) + str(age) + " " * (12 - len(str(age))) + str(rating) + " " * (
                                 15 - len(str(rating))))
-            print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
+            print("-" * (2+5+5+70+8+50+5+4+8+3+7+5))
             return
 
 
@@ -397,15 +394,15 @@ def print_movies_for_audience(cursor):
         else:
             cursor.execute("SELECT m.movieID, title, directorName, price, rating FROM Movie m LEFT OUTER JOIN Booking b USING (movieID)"
                            f"WHERE b.audienceID = {audience_id}")
-            print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
+            print("-" * (2+5+5+70+8+50+5+4+8+3+7+5))
             print(
-                "id" + " " * 5 + "title" + " " * 100 + "director" + " " * 55 + "price" + " " * 8 + "rating" + " " * 8)
-            print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
+                "id" + " " * 5 + "title" + " " * 70 + "director" + " " * 55 + "price" + " " * 8 + "rating" + " " * 8)
+            print("-" * (2+5+5+70+8+50+5+4+8+3+7+5))
 
             for (movieID, title, director, price, rating) in cursor:
-                print(str(movieID) + " " * (7 - len(str(movieID))) + str(title) + " " * (105 - len(str(title))) + str(
+                print(str(movieID) + " " * (7 - len(str(movieID))) + str(title) + " " * (75 - len(str(title))) + str(
                     director) + " " * (63 - len(str(director))) + str(price) + " " * (13 - len(str(price))) + str(rating) + " " * (14 - len(str(rating))))
-            print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
+            print("-" * (2 + 5 + 5 + 70 + 8 + 50 + 5 + 4 + 8 + 3 + 7 + 5))
             return
 
 
@@ -501,17 +498,17 @@ def recommend(cursor):
     avg_rating = user_item[int(audience_id)][max_rating_movie]
 
     cursor.execute(f"SELECT movieID, title, directorName, price FROM Movie WHERE movieID = {max_rating_movie+1}")
-    print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
+    print("-" * (2+5+5+70+8+50+5+4+8+3+7+5))
     print(
-        "id" + " " * 4 + "title" + " " * 96 + "director" + " " * 44 + "price" + " " * 4 + "avg. rating" + " " * 4 + "expected rating" + " " * 4)
-    print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
+        "id" + " " * 4 + "title" + " " * 70 + "director" + " " * 40 + "price" + " " * 4 + "avg. rating" + " " * 4 + "expected rating" + " " * 4)
+    print("-" * (2+5+5+70+8+50+5+4+8+3+7+5))
 
     for (id, title, director, price) in cursor:
-        print(str(id) + " " * (6 - len(str(id))) + str(title) + " " * (101 - len(str(title))) + str(
-            director) + " " * (52 - len(str(director))) + str(price) + " " * (9 - len(str(price))) + str(
+        print(str(id) + " " * (6 - len(str(id))) + str(title) + " " * (75 - len(str(title))) + str(
+            director) + " " * (48 - len(str(director))) + str(price) + " " * (9 - len(str(price))) + str(
             avg_rating) + " " * (15 - len(str(avg_rating))) + str(expected_rating) + " " * (19-len(str(round(expected_rating,2)))))
 
-    print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
+    print("-" * (2+5+5+70+8+50+5+4+8+3+7+5))
 
 
 # Total of 60 pt.
