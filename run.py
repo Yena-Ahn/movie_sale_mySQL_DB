@@ -1,3 +1,5 @@
+import math
+
 import mysql.connector
 import pandas as pd
 from sqlalchemy import create_engine
@@ -6,6 +8,7 @@ import pymysql
 
 # Problem 1 (5 pt.)
 def data(table_name):
+
     data = pd.read_csv("data.csv")
     engine = create_engine('mysql+pymysql://DB2022_81863:DB2022_81863@astronaut.snu.ac.kr:7000/DB2022_81863', encoding='utf-8')
     if table_name == 'Director':
@@ -27,28 +30,13 @@ def data(table_name):
         audience.to_sql(name='Audience', con=engine, if_exists='append', index=False)
         return
 
-
-def delete(cursor):
-    # drop all tables in DB
-    reset = ["SET @tables = NULL;",
-             "SELECT GROUP_CONCAT(table_schema, '.', table_name) INTO @tables FROM information_schema.tables WHERE table_schema = 'DB2022_81863';",
-             "SET @tables = CONCAT('DROP TABLE ', @tables);", "PREPARE stmt FROM @tables;", "EXECUTE stmt;",
-             "DEALLOCATE PREPARE stmt;"]
-    for statement in reset:
-        cursor.execute(statement)
-
-def reset(connection, cursor, status='Y'):
-
-
-    if status == 'Y':
-        delete(cursor)
-
+def create_table(cursor):
     tables = {}
 
     # create table Director
     tables['Director'] = (
         "CREATE TABLE `Director` ("
-        "    `name` varchar(20) NOT NULL,"
+        "    `name` varchar(50) NOT NULL,"
         "    PRIMARY KEY (`name`))"
 
     )
@@ -57,9 +45,9 @@ def reset(connection, cursor, status='Y'):
     tables['Movie'] = (
         "CREATE TABLE `Movie` ("
         "    `movieID` int NOT NULL AUTO_INCREMENT,"
-        "    `title` varchar(55) NOT NULL,"
+        "    `title` varchar(100) NOT NULL,"
         "    `price` int,"
-        "    `directorName` varchar(20) NOT NULL,"
+        "    `directorName` varchar(50) NOT NULL,"
         "    PRIMARY KEY (`movieID`),"
         "    FOREIGN KEY (`directorName`) REFERENCES `Director` (`name`))"
     )
@@ -68,7 +56,7 @@ def reset(connection, cursor, status='Y'):
     tables['Audience'] = (
         "CREATE TABLE `Audience` ("
         "    `audienceID` int NOT NULL AUTO_INCREMENT,"
-        "    `name` varchar(10) NOT NULL,"
+        "    `name` varchar(50) NOT NULL,"
         "    `gender` char(1) NOT NULL,"
         "    `age` int NOT NULL,"
         "    CHECK ((`gender` = 'F') OR (`gender` = 'M')),"
@@ -98,25 +86,41 @@ def reset(connection, cursor, status='Y'):
     #     "    FOREIGN KEY (`bookingID`) REFERENCES `Booking` (`bookingID`),"
     #     "    CHECK ((`rating` <= 5) AND (`rating` >= 1)))"
     # )
-
-    print("Initializing databse...")
     for table in tables:
-        try:
-            print(f"Creating table '{table}':", end=" ")
-            cursor.execute(tables[table])
-            data(table)
-        except mysql.connector.Error as e:
-            if e.errno == mysql.connector.errorcode.ER_TABLE_EXISTS_ERROR:
-                print("already exists.")
+        cursor.execute(tables[table])
+
+
+
+def delete(cursor):
+    # drop all tables in DB
+    reset = ["SET @tables = NULL;",
+             "SELECT GROUP_CONCAT(table_schema, '.', table_name) INTO @tables FROM information_schema.tables WHERE table_schema = 'DB2022_81863';",
+             "SET @tables = CONCAT('DROP TABLE ', @tables);", "PREPARE stmt FROM @tables;", "EXECUTE stmt;",
+             "DEALLOCATE PREPARE stmt;"]
+    for statement in reset:
+        cursor.execute(statement)
+
+
+
+def reset(cursor, status="Y"):
+    tables = ["Director", "Movie", "Audience", "Booking"]
+    if status == 'Y':
+        print("Initializing database...")
+        delete(cursor)
+        create_table(cursor)
+        for table in tables:
+            try:
+                print(f"Creating table '{table}':", end=" ")
+                data(table)
+            except mysql.connector.Error as e:
+                    print(e.msg)
             else:
-                print(e.msg)
-        else:
-            print('successfully created.')
-
-
-
-    print('Initialized database')
-    print()
+                print('successfully created.')
+        print('Initialized database')
+        print()
+    else:
+        print("User has not reset database. Database is not cleared.")
+        print()
 
 # Problem 2 (3 pt.)
 def print_movies(cursor):
@@ -124,13 +128,13 @@ def print_movies(cursor):
                    "FROM Movie m LEFT OUTER JOIN Booking b USING (movieID) "
                    "GROUP BY m.movieID, m.title, m.directorName, m.price"
                    )
-    print("-" * (2+5+5+55+8+20+5+4+8+3+7+5))
-    print("id" + " " * 5 + "title" + " " * 55 + "director" + " " * 20 + "price" + " " * 4 + "bookings" + " " * 3 + "ratings" + " " * 5)
-    print("-" * (2+5+5+55+8+20+5+4+8+3+7+5))
+    print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
+    print("id" + " " * 5 + "title" + " " * 100 + "director" + " " * 50 + "price" + " " * 4 + "bookings" + " " * 3 + "ratings" + " " * 5)
+    print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
 
     for (movieID, title, director, price, booking, rating) in cursor:
-        print(str(movieID) + " " * (7-len(str(movieID))) + str(title) + " " * (60-len(str(title))) + str(director) + " " * (28-len(str(director))) + str(price) + " " * (9-len(str(price))) + str(booking) + " " * (11-len(str(booking))) + str(rating) + " " * (12-len(str(rating))))
-    print("-" * (2+5+5+55+8+20+5+4+8+3+7+5))
+        print(str(movieID) + " " * (7-len(str(movieID))) + str(title) + " " * (105-len(str(title))) + str(director) + " " * (58-len(str(director))) + str(price) + " " * (9-len(str(price))) + str(booking) + " " * (11-len(str(booking))) + str(rating) + " " * (12-len(str(rating))))
+    print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
 
 
 
@@ -140,12 +144,12 @@ def print_audiences(cursor):
     cursor.execute("SELECT *"
                    "FROM Audience"
                    )
-    print("-" * (2 + 5 + 5 + 55 + 8 + 20 + 5 + 4 + 8 + 3 + 7 + 5))
-    print("id" + " " * 5 + "name" + " " * 55 + "gender" + " " * 5 + "age" + " " * 5)
-    print("-" * (2 + 5 + 5 + 55 + 8 + 20 + 5 + 4 + 8 + 3 + 7 + 5))
+    print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
+    print("id" + " " * 5 + "name" + " " * 100 + "gender" + " " * 5 + "age" + " " * 5)
+    print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
     for (id, name, gender, age) in cursor:
-        print(str(id) + " " * (7-len(str(id))) + name + " " * (60-len(name)) + gender + " " * 10 + str(age) + " " * (8-len(str(age))))
-    print("-" * (2 + 5 + 5 + 55 + 8 + 20 + 5 + 4 + 8 + 3 + 7 + 5))
+        print(str(id) + " " * (7-len(str(id))) + name + " " * (104-len(name)) + gender + " " * 10 + str(age) + " " * (8-len(str(age))))
+    print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
 
 # Problem 4 (3 pt.)
 def insert_movie(cursor):
@@ -154,49 +158,42 @@ def insert_movie(cursor):
     director = input('Movie director: ')
     price = input('Movie price: ')
 
-    while not price.isdigit() or director.isdigit():
-        if not price.isdigit():
-            print("Please input correct integer value to price.")
-            title = input('Movie title: ')
-            director = input('Movie director: ')
-            price = input('Movie price: ')
-        else:
-            print("Please input correct characters to director.")
-            title = input('Movie title: ')
-            director = input('Movie director: ')
-            price = input('Movie price: ')
+
+    if not price.isdigit() or director.isdigit():
+        print("[ERROR] Please input correct data type.")
+        return
 
     try:
         cursor.execute(f"INSERT INTO Director VALUES ('{director}')")
         cursor.execute(f"INSERT INTO Movie VALUES (NULL, '{title}', {price}, '{director}')")
         print('A movie is successfully inserted.')
         print()
+    except mysql.connector.Error as e:
+        print("[ERROR] " + e.msg)
         return
-    except:
-        print("Please input correctly.")
-        insert_movie(cursor)
+
 
 
 
 # Problem 6 (4 pt.)
 def remove_movie(cursor):
-    # YOUR CODE GOES HERE
     movie_id = input('Movie ID: ')
-    while not movie_id.isdigit():
-        print("Please insert correct integer value.")
-        movie_id = input('Movie ID: ')
+
+    if not movie_id.isdigit():
+        print("[ERROR] Please insert correct integer value.")
+        return
 
     cursor.execute(f"SELECT EXISTS (SELECT * FROM Movie WHERE movieID = {movie_id})")
     for (bool,) in cursor:
         if bool == 0:
-            print(f'Movie {movie_id} does not exist. Please insert correct Movie ID.')
-            remove_movie(cursor)
+            print(f'[ERROR] Movie {movie_id} does not exist. Please insert correct Movie ID.')
+            return
 
         if bool == 1:
             cursor.execute(f"DELETE FROM Booking WHERE movieID = {movie_id}")
             cursor.execute(f"DELETE FROM Movie WHERE movieID = {movie_id}")
-            print('A movie is successfully removed')
-            return
+            print('A movie is successfully removed.')
+            print()
 
 
 
@@ -207,17 +204,21 @@ def insert_audience(cursor):
     gender = input('Audience gender: ')
     age = input('Audience age: ')
 
-    while name.isdigit():
-        print("Please input correct characters to name.")
-        name = input('Audience name: ')
-        gender = input('Audience gender: ')
-        age = input('Audience age: ')
+    if name.isdigit():
+        print("[ERROR] Name should be a string.")
+        return
+    if not (gender == "F" or gender == "M"):
+        print("[ERROR] Gender should be either F or M.")
+        return
+    if not age.isdigit():
+        print("[ERROR] Age should be an integer.")
+        return
 
     try:
         cursor.execute(f"SELECT EXISTS (SELECT * FROM Audience WHERE name = '{name}' AND gender = '{gender}' AND age = {age})")
-    except mysql.connector.errors.ProgrammingError as e:
-            print("Please input correct integer value to age.")
-            insert_audience(cursor)
+    except mysql.connector.Error as e:
+        print("[ERROR] " + e.msg)
+        return
 
 
     for (bool,) in cursor:
@@ -227,12 +228,8 @@ def insert_audience(cursor):
                 print('An audience is successfully inserted')
                 print()
                 return
-            except mysql.connector.errors.DatabaseError as e:
-                print(f"Please input correct gender [F/M].")
-                insert_audience(cursor)
-            except mysql.connector.errors.ProgrammingError as e:
-                print("Please input correctly.")
-                insert_audience(cursor)
+            except mysql.connector.Error as e:
+                print("[ERROR] " + e.msg)
 
         else:
             print("The audience already exists!")
@@ -242,105 +239,98 @@ def insert_audience(cursor):
 
 # Problem 7 (4 pt.)
 def remove_audience(cursor):
-    # YOUR CODE GOES HERE
     audience_id = input('Audience ID: ')
-    while not audience_id.isdigit():
-        print("Please insert correct integer value.")
-        audience_id = input('Audience ID: ')
+
+    if not audience_id.isdigit():
+        print("[ERROR] Please insert correct integer value.")
+        return
 
     cursor.execute(f"SELECT EXISTS (SELECT * FROM Audience WHERE audienceID = {audience_id})")
 
     for (bool,) in cursor:
         if bool == 0:
-            print(f'Audience {audience_id} does not exist. Please insert correct Audience ID.')
-            remove_audience(cursor)
+            print(f'[ERROR] Audience {audience_id} does not exist.')
+            return
         if bool == 1:
             cursor.execute(f"DELETE FROM Booking WHERE audienceID = {audience_id}")
             cursor.execute(f"DELETE FROM Audience WHERE audienceID = {audience_id}")
-            print('An audience is successfully removed')
+            print('An audience is successfully removed.')
+            print()
             return
 
 
 # Problem 8 (5 pt.)
 def book_movie(cursor):
-    # YOUR CODE GOES HERE
     movie_id = input('Movie ID: ')
     audience_id = input('Audience ID: ')
 
-    while not (movie_id.isdigit() and audience_id.isdigit()):
-        print("Please insert correct integer value.")
-        movie_id = input('Movie ID: ')
-        audience_id = input('Audience ID: ')
+    if not (movie_id.isdigit() and audience_id.isdigit()):
+        print("[ERROR] Please insert correct integer value.")
+        return
 
     cursor.execute(f"SELECT EXISTS (SELECT * FROM Movie WHERE movieID = {movie_id})")
     for (bool,) in cursor:
         if bool == 0:
-            print(f'Movie {movie_id} does not exist. Please insert correct Movie ID.')
-            book_movie(cursor)
-        else:
-            cursor.execute(f"SELECT EXISTS (SELECT * FROM Audience WHERE audienceID = {audience_id})")
-            for (bool,) in cursor:
-                if bool == 0:
-                    print(f'Audience {audience_id} does not exist. Please insert correct Audience ID.')
-                    book_movie(cursor)
-                else:
-                    cursor.execute(f"SELECT EXISTS (SELECT * FROM Booking WHERE movieID = {movie_id} and audienceID = {audience_id})")
-                    for (bool,) in cursor:
-                        if bool == 1:
-                            print('One audience cannot book the same movie twice.')
-                            return
-                        else:
-                            cursor.execute(f"INSERT INTO Booking VALUES (NULL, {movie_id}, {audience_id}, NULL)")
-                            print('Successfully booked a movie')
-                            return
+            print(f'[ERROR] Movie {movie_id} does not exist.')
+            return
+
+    cursor.execute(f"SELECT EXISTS (SELECT * FROM Audience WHERE audienceID = {audience_id})")
+    for (bool,) in cursor:
+        if bool == 0:
+            print(f'[ERROR] Audience {audience_id} does not exist. Please insert correct Audience ID.')
+            return
+
+    cursor.execute(f"SELECT EXISTS (SELECT * FROM Booking WHERE movieID = {movie_id} and audienceID = {audience_id})")
+    for (bool,) in cursor:
+            if bool == 1:
+                print('[ERROR] One audience cannot book the same movie twice.')
+                return
+
+
+    cursor.execute(f"INSERT INTO Booking VALUES (NULL, {movie_id}, {audience_id}, NULL)")
+    print('Successfully booked a movie')
+    print()
+    return
 
 
 # Problem 9 (5 pt.)
 def rate_movie(cursor):
-    print("******************************************************************")
-    print("If the followings are not considered, the action will be aborted:")
-    print("    * Movie ID, Audience ID, and Ratings should be integer.")
-    print("    * Ratings should be an integer value between 1 to 5.")
-    print("    * Movie ID and Audience ID should exist in the database.")
-    print("******************************************************************")
-
     movie_id = input('Movie ID: ')
     audience_id = input('Audience ID: ')
     rating = input('Ratings (1~5): ')
 
-    while not (movie_id.isdigit() and audience_id.isdigit() and rating.isdigit()):
-        print("Please re-enter correct integer values.")
-        movie_id = input('Movie ID: ')
-        audience_id = input('Audience ID: ')
-        rating = input('Ratings (1~5): ')
+    if not (movie_id.isdigit() and audience_id.isdigit() and rating.isdigit()):
+        print("[ERROR] Inputs should be integers.")
+        return
 
 
     cursor.execute(f"SELECT EXISTS (SELECT * FROM Movie WHERE movieID = {movie_id})")
     for (bool,) in cursor:
         if bool == 0:
-            print(f'Movie {movie_id} does not exist.')
+            print(f'[ERROR] Movie {movie_id} does not exist.')
             return
 
 
     cursor.execute(f"SELECT EXISTS (SELECT * FROM Audience WHERE audienceID = {audience_id})")
     for (bool,) in cursor:
         if bool == 0:
-            print(f'Audience {audience_id} does not exist')
+            print(f'[ERROR] Audience {audience_id} does not exist')
             return
 
     if int(rating) > 5 or int(rating) < 1:
-        print('Wrong value for a rating: should be a value between 1 to 5.')
+        print('[ERROR] Wrong value for a rating: should be a value between 1 to 5.')
         return
 
     cursor.execute(f"SELECT EXISTS (SELECT * FROM Booking WHERE movieID = {movie_id} and audienceID = {audience_id})")
     for (bool,) in cursor:
         if bool == 0:
-            print("Booking does not exist. You can't rate the movie you haven't booked.")
+            print("[ERROR] Booking does not exist. You can't rate the movie you haven't booked.")
             return
         else:
             cursor.execute(
                 f"UPDATE Booking SET rating = {rating} WHERE movieID = {movie_id} and audienceID = {audience_id}")
             print('Successfully rated a movie.')
+            print()
 
 
     # cursor.execute(f"SELECT EXISTS (SELECT * FROM Rating WHERE bookingID = (SELECT bookingID FROM Booking WHERE movieID = {movie_id} and audienceID = {audience_id}))")
@@ -359,68 +349,169 @@ def rate_movie(cursor):
 
 # Problem 10 (5 pt.)
 def print_audiences_for_movie(cursor):
-    # YOUR CODE GOES HERE
     movie_id = input('Movie ID: ')
-    while not movie_id.isdigit():
-        movie_id = input('Movie ID: ')
 
+    # check correct data type
+    if not movie_id.isdigit():
+        print("[ERROR] Movie ID should be an integer.")
+        return
 
+    #check if movie_id exists
     cursor.execute(f"SELECT EXISTS (SELECT * FROM Movie WHERE movieID = {movie_id})")
     for (bool,) in cursor:
         if bool == 0:
-            print(f'Movie {movie_id} does not exist')
-            print_audiences_for_movie(cursor)
+            print(f'[ERROR] Movie {movie_id} does not exist')
+            return
         else:
             cursor.execute("SELECT a.audienceID, name, gender, age, rating FROM Audience a LEFT OUTER JOIN Booking b USING (audienceID)"
                            f"WHERE b.movieID = {movie_id}"
                            )
-            print("-" * (2 + 5 + 5 + 55 + 8 + 20 + 5 + 4 + 8 + 3 + 7 + 5))
+            print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
             print(
-                "id" + " " * 5 + "name" + " " * 60 + "gender" + " " * 30 + "age" + " " * 6 + "rating" + " " * 6)
-            print("-" * (2 + 5 + 5 + 55 + 8 + 20 + 5 + 4 + 8 + 3 + 7 + 5))
+                "id" + " " * 5 + "name" + " " * 100 + "gender" + " " * 60 + "age" + " " * 9 + "rating" + " " * 9)
+            print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
             for (audienceID, name, gender, age, rating) in cursor:
                 print(
-                    str(audienceID) + " " * (7 - len(str(audienceID))) + str(name) + " " * (64 - len(str(name))) + str(
+                    str(audienceID) + " " * (7 - len(str(audienceID))) + str(name) + " " * (104 - len(str(name))) + str(
                         gender)
-                    + " " * (36 - len(str(gender))) + str(age) + " " * (9 - len(str(age))) + str(rating) + " " * (
-                                12 - len(str(rating))))
-            print("-" * (2 + 5 + 5 + 55 + 8 + 20 + 5 + 4 + 8 + 3 + 7 + 5))
+                    + " " * (66 - len(str(gender))) + str(age) + " " * (12 - len(str(age))) + str(rating) + " " * (
+                                15 - len(str(rating))))
+            print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
             return
 
 
 
 
-
-
-
-
-
-
 # Problem 11 (5 pt.)
-def print_movies_for_audience():
-    # YOUR CODE GOES HERE
+def print_movies_for_audience(cursor):
     audience_id = input('Audience ID: ')
+    if not audience_id.isdigit():
+        print("[ERROR] Audience ID should be an integer.")
+        return
+
+    cursor.execute(f"SELECT EXISTS (SELECT * FROM Audience WHERE audienceID = {audience_id})")
+    for (bool,) in cursor:
+        if bool == 0:
+            print(f'[ERROR] Audience {audience_id} does not exist')
+            return
+        else:
+            cursor.execute("SELECT m.movieID, title, directorName, price, rating FROM Movie m LEFT OUTER JOIN Booking b USING (movieID)"
+                           f"WHERE b.audienceID = {audience_id}")
+            print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
+            print(
+                "id" + " " * 5 + "title" + " " * 100 + "director" + " " * 55 + "price" + " " * 8 + "rating" + " " * 8)
+            print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
+
+            for (movieID, title, director, price, rating) in cursor:
+                print(str(movieID) + " " * (7 - len(str(movieID))) + str(title) + " " * (105 - len(str(title))) + str(
+                    director) + " " * (63 - len(str(director))) + str(price) + " " * (13 - len(str(price))) + str(rating) + " " * (14 - len(str(rating))))
+            print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
+            return
 
 
-    # error message
-    print(f'Audience {audience_id} does not exist')
-    # YOUR CODE GOES HERE
-    pass
 
 
 # Problem 12 (10 pt.)
-def recommend():
-    # YOUR CODE GOES HERE
-    movie_id = input('Movie ID: ')
+def recommend(cursor):
     audience_id = input('Audience ID: ')
+    if not audience_id.isdigit():
+        print("[ERROR] Audience ID should be an integer.")
+        return
+
+    cursor.execute(f"SELECT EXISTS (SELECT * FROM Audience WHERE audienceID={audience_id})")
+    for (bool,) in cursor:
+        if bool == 0:
+            print(f"[ERROR] Audience ID {audience_id} does not exist.")
+            return
 
 
-    # error message
-    print(f'Movie {movie_id} does not exist')
-    print(f'Audience {audience_id} does not exist')
-    print('Rating does not exist')
-    # YOUR CODE GOES HERE
-    pass
+    cursor.execute("SELECT movieID FROM Movie ORDER BY movieID DESC LIMIT 1")
+    row_col = [movieID for (movieID,) in cursor]
+    cursor.execute("SELECT audienceID FROM Audience ORDER BY audienceID DESC LIMIT 1")
+    row_col += [audienceID for (audienceID,) in cursor]
+    movie_num, audience_num = row_col[0], row_col[1]
+    user_item = [[0 for i in range(movie_num)] for j in range(audience_num)]
+
+    cursor.execute("SELECT EXISTS (SELECT * FROM Booking WHERE rating IS NOT NULL)")
+    for (bool,) in cursor:
+        if bool == 0:
+            print('[ERROR] Rating does not exist.')
+            return
+
+    cursor.execute("SELECT audienceID, movieID, rating FROM Audience CROSS JOIN Movie LEFT OUTER JOIN Booking USING (audienceID, movieID)"
+                    "ORDER BY audienceID, movieID"
+                   )
+
+    # initialise user_item array
+    for (audienceID, movieID, rating) in cursor:
+        if rating is not None:
+            user_item[audienceID-1][movieID-1] = rating
+
+    non_rated_movie = []
+    for i in range(movie_num):
+        if user_item[int(audience_id)][i] == 0:
+            non_rated_movie.append(i)
+
+
+    # temporary rating for empty ratings
+    for i in range(audience_num):
+        if sum(user_item[i]) > 0:
+            result, count = 0, 0
+            for j in range(movie_num):
+                if user_item[i][j] > 0:
+                    result += user_item[i][j]
+                    count += 1
+            if count != 0:
+                avg = result / count
+                for j in range(movie_num):
+                    if user_item[i][j] == 0:
+                        user_item[i][j] = avg
+
+    similarity_matrix = [[0 for i in range(audience_num)] for j in range(audience_num)]
+    for i in range(audience_num):
+        for j in range(audience_num):
+            if i == j:
+                similarity_matrix[i][j] = 1.0
+            else:
+                numerator, distanceA, distanceB = 0, 0, 0
+                for k in range(movie_num):
+                    numerator += user_item[i][k] * user_item[j][k]
+                    distanceA += user_item[i][k] ** 2
+                    distanceB += user_item[j][k] ** 2
+                if distanceA == 0 or distanceB == 0:
+                    cos_sim = 0
+                else:
+                    cos_sim = round(numerator / (math.sqrt(distanceA) * math.sqrt(distanceB)), 2)
+                similarity_matrix[i][j] = cos_sim
+    rating = []
+    for k in non_rated_movie:
+        numerator, denominator = 0, 0
+        for i in range(audience_num):
+            numerator += user_item[i][k] * similarity_matrix[int(audience_id)][i]
+            denominator += similarity_matrix[int(audience_id)][i]
+        rating.append(numerator / denominator)
+
+    max_rating_movie = 0
+    expected_rating = 0
+    for i in range(len(rating)):
+        if rating[i] > expected_rating:
+            max_rating_movie = non_rated_movie[i]
+            expected_rating = rating[i]
+
+    avg_rating = user_item[int(audience_id)][max_rating_movie]
+
+    cursor.execute(f"SELECT movieID, title, directorName, price FROM Movie WHERE movieID = {max_rating_movie+1}")
+    print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
+    print(
+        "id" + " " * 4 + "title" + " " * 96 + "director" + " " * 44 + "price" + " " * 4 + "avg. rating" + " " * 4 + "expected rating" + " " * 4)
+    print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
+
+    for (id, title, director, price) in cursor:
+        print(str(id) + " " * (6 - len(str(id))) + str(title) + " " * (101 - len(str(title))) + str(
+            director) + " " * (52 - len(str(director))) + str(price) + " " * (9 - len(str(price))) + str(
+            avg_rating) + " " * (15 - len(str(avg_rating))) + str(expected_rating) + " " * (19-len(str(round(expected_rating,2)))))
+
+    print("-" * (2+5+5+100+8+50+5+4+8+3+7+5))
 
 
 # Total of 60 pt.
@@ -437,7 +528,7 @@ def main():
     cursor = connection.cursor()
 
     # initialize database
-    reset(connection, cursor, "Y")
+    reset(cursor, "Y")
 
     while True:
         print("WELCOME TO MOVIE BOOKING SYSTEM")
@@ -456,8 +547,11 @@ def main():
         print('12. exit')
         print('13. reset database')
         print('============================================================')
-        menu = int(input('Select your action: '))
-
+        menu = input('Select your action: ')
+        if not menu.isdigit():
+            print("[ERROR] Invalid action.")
+            continue
+        menu = int(menu)
         if menu == 1:
             print_movies(cursor)
         elif menu == 2:
@@ -487,12 +581,12 @@ def main():
             break
         elif menu == 13:
             inputVal = input("Are you sure to reset the database? [Y/N] ")
-            while inputVal != 'Y' and inputVal != 'N':
-                print("Please choose between 'Y' or 'N'.")
-                inputVal = input("Are you sure to reset the database? [Y/N] ")
-            reset(connection, cursor, inputVal)
+            if inputVal != 'Y' and inputVal != 'N':
+                print("[ERROR] Please choose between 'Y' or 'N'.")
+                return
+            reset(cursor, inputVal)
         else:
-            print('Invalid action')
+            print('[ERROR] Invalid action.')
 
 
 if __name__ == "__main__":
